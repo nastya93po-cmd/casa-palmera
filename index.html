@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Casa Palmera — Full Finishing Dashboard</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f0f0f; color: #e0e0e0; }
+
+.header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 30px 40px; border-bottom: 1px solid #333; }
+.header h1 { font-size: 28px; color: #f5f0e8; letter-spacing: 1px; }
+.header p { color: #888; margin-top: 5px; font-size: 14px; }
+
+.summary-bar { display: flex; gap: 20px; padding: 20px 40px; background: #141414; border-bottom: 1px solid #222; flex-wrap: wrap; }
+.summary-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 18px 24px; min-width: 180px; flex: 1; }
+.summary-card .label { font-size: 11px; text-transform: uppercase; color: #666; letter-spacing: 1px; }
+.summary-card .value { font-size: 26px; font-weight: 700; color: #f5f0e8; margin-top: 4px; }
+.summary-card .sub { font-size: 12px; color: #888; margin-top: 2px; }
+.summary-card.highlight { border-color: #c9a96e; }
+.summary-card.highlight .value { color: #c9a96e; }
+
+.controls { padding: 20px 40px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.search-box { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 10px 16px; color: #e0e0e0; font-size: 14px; width: 300px; }
+.search-box:focus { outline: none; border-color: #c9a96e; }
+.filter-btn { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 8px 16px; color: #aaa; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+.filter-btn:hover, .filter-btn.active { background: #c9a96e; color: #000; border-color: #c9a96e; }
+
+.content { padding: 20px 40px; }
+
+.category { margin-bottom: 30px; }
+.category-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 16px 20px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px 12px 0 0; }
+.category-header h2 { font-size: 18px; color: #f5f0e8; }
+.category-header .cat-total { font-size: 16px; color: #c9a96e; font-weight: 600; }
+.category-header .cat-count { font-size: 12px; color: #666; margin-left: 12px; }
+
+table { width: 100%; border-collapse: collapse; background: #141414; border: 1px solid #2a2a2a; border-top: none; }
+table th { background: #1a1a1a; padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: #666; letter-spacing: 0.5px; border-bottom: 1px solid #2a2a2a; }
+table td { padding: 10px 14px; border-bottom: 1px solid #1e1e1e; font-size: 13px; vertical-align: top; }
+table tr:hover { background: #1a1a1a; }
+table tr:last-child td { border-bottom: none; }
+
+.floor-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.floor-B { background: #2d1b4e; color: #b388ff; }
+.floor-GF { background: #1b3a2d; color: #69f0ae; }
+.floor-1F { background: #1b2d3a; color: #64b5f6; }
+.floor-2F { background: #3a2d1b; color: #ffb74d; }
+.floor-R { background: #3a1b1b; color: #ef9a9a; }
+
+.status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+.status-pending { background: #332200; color: #ffb74d; }
+.status-ordered { background: #003322; color: #69f0ae; }
+.status-tbd { background: #222; color: #888; }
+
+.price { text-align: right; font-variant-numeric: tabular-nums; }
+.price-est { color: #888; font-style: italic; }
+
+.supplier-link { color: #64b5f6; text-decoration: none; font-size: 12px; }
+.supplier-link:hover { text-decoration: underline; }
+
+.section-divider { text-align: center; padding: 8px; background: #1a1a1a; color: #c9a96e; font-size: 12px; font-weight: 600; letter-spacing: 1px; border-bottom: 1px solid #2a2a2a; }
+
+.notes { background: #1a1a0a; border-left: 3px solid #c9a96e; padding: 16px 20px; margin: 20px 0; border-radius: 0 8px 8px 0; font-size: 13px; color: #bbb; }
+.notes strong { color: #c9a96e; }
+
+.footer { padding: 30px 40px; text-align: center; color: #444; font-size: 12px; border-top: 1px solid #222; margin-top: 40px; }
+
+/* Wrap all tables in scrollable container */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+@media (max-width: 768px) {
+  .summary-bar { flex-direction: column; padding: 12px 12px; gap: 10px; }
+  .summary-card { min-width: unset; padding: 12px 14px; }
+  .summary-card .value { font-size: 20px; }
+  .controls { padding: 12px; flex-direction: column; }
+  .content { padding: 10px 8px; }
+  .search-box { width: 100%; }
+  .header { padding: 16px 12px; }
+  .header h1 { font-size: 20px; }
+
+  /* Tables: horizontal scroll */
+  .category { overflow: visible; }
+  table { font-size: 11px; min-width: 600px; }
+  table th, table td { padding: 8px 6px; white-space: nowrap; }
+  table td:first-child { white-space: normal; min-width: 100px; }
+
+  /* Category headers */
+  .category-header { padding: 12px; flex-wrap: wrap; gap: 4px; }
+  .category-header h2 { font-size: 15px; }
+  .category-header .cat-total { font-size: 14px; }
+
+  /* Notes */
+  .notes { padding: 12px; font-size: 12px; }
+  .footer { padding: 20px 12px; }
+
+  /* Comparison block */
+  .nero-compare { flex-direction: column !important; padding: 10px !important; gap: 10px !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1>CASA PALMERA</h1>
+    <p><span class="lang-en">Full Finishing Estimate — Villa 1 &nbsp;|&nbsp; Jln Munduk Belan, Cemagi-Seseh, Bali &nbsp;|&nbsp; Updated: 25 March 2026</span><span class="lang-ru" style="display:none">Полная смета отделки — Вилла 1 &nbsp;|&nbsp; Jln Munduk Belan, Cemagi-Seseh, Bali &nbsp;|&nbsp; Обновлено: 25 марта 2026</span></p>
+  </div>
+  <div style="display:flex;gap:6px;">
+    <button class="filter-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+    <button class="filter-btn" id="btn-ru" onclick="setLang('ru')">RU</button>
+  </div>
+</div>
+
+<div class="summary-bar">
+  <div class="summary-card highlight">
+    <div class="label"><span class="lang-en">Total Estimate</span><span class="lang-ru" style="display:none">Общая смета</span></div>
+    <div class="value">IDR 1.05B</div>
+    <div class="sub">≈ $65,000 USD</div>
+  </div>
+  <div class="summary-card">
+    <div class="label"><span class="lang-en">Categories</span><span class="lang-ru" style="display:none">Категории</span></div>
+    <div class="value">8</div>
+    <div class="sub"><span class="lang-en">Walls, Floors, Ceilings, Doors, Electric, Furniture, Equipment, Sanitary</span><span class="lang-ru" style="display:none">Стены, Полы, Потолки, Двери, Электрика, Мебель, Оборудование, Сантехника</span></div>
+  </div>
+  <div class="summary-card">
+    <div class="label"><span class="lang-en">Total Items</span><span class="lang-ru" style="display:none">Всего позиций</span></div>
+    <div class="value">127</div>
+    <div class="sub"><span class="lang-en">Across all floors</span><span class="lang-ru" style="display:none">По всем этажам</span></div>
+  </div>
+  <div class="summary-card">
+    <div class="label"><span class="lang-en">Floors</span><span class="lang-ru" style="display:none">Этажи</span></div>
+    <div class="value">5</div>
+    <div class="sub"><span class="lang-en">Basement · GF · 1F · 2F · Roof</span><span class="lang-ru" style="display:none">Подвал · 1 этаж · 2 этаж · 3 этаж · Крыша</span></div>
+  </div>
+</div>
+
+<div class="controls">
+  <input type="text" class="search-box" id="searchBox" placeholder="Search / Поиск..." oninput="filterTable()">
+  <button class="filter-btn floor-filter active" onclick="filterFloor('all', this)"><span class="lang-en">All</span><span class="lang-ru" style="display:none">Все</span></button>
+  <button class="filter-btn floor-filter" onclick="filterFloor('B', this)"><span class="lang-en">Basement</span><span class="lang-ru" style="display:none">Подвал</span></button>
+  <button class="filter-btn floor-filter" onclick="filterFloor('GF', this)"><span class="lang-en">Ground</span><span class="lang-ru" style="display:none">1 этаж</span></button>
+  <button class="filter-btn floor-filter" onclick="filterFloor('1F', this)"><span class="lang-en">1st Floor</span><span class="lang-ru" style="display:none">2 этаж</span></button>
+  <button class="filter-btn floor-filter" onclick="filterFloor('2F', this)"><span class="lang-en">2nd Floor</span><span class="lang-ru" style="display:none">3 этаж</span></button>
+  <button class="filter-btn floor-filter" onclick="filterFloor('R', this)"><span class="lang-en">Roof</span><span class="lang-ru" style="display:none">Крыша</span></button>
+</div>
+
+<div class="content">
+
+<!-- ========== 1. ELECTRICAL ========== -->
+<div class="category" data-cat="electrical">
+<div class="category-header" onclick="toggleCat(this)">
+  <div><h2>⚡ Electrical — Power & Lighting</h2><span class="cat-count">14 item types · 248+ units</span></div>
+  <div class="cat-total">IDR ~75M</div>
+</div>
+
+<!-- NERO Series Comparison -->
+<div class="nero-compare" style="display:flex; gap:16px; padding:16px; background:#141414; border:1px solid #2a2a2a; border-top:none; flex-wrap:wrap;">
+  <div style="flex:1; min-width:280px; background:#1a1a1a; border:1px solid #c9a96e; border-radius:10px; padding:16px;">
+    <div style="font-size:13px; color:#c9a96e; font-weight:700; margin-bottom:8px;">OPTION A — PRECIOSA I9 GREY</div>
+    <div style="font-size:11px; color:#aaa; line-height:1.6;">
+      Premium design line · Matte grey · Rounded edges<br>
+      124 pcs/villa · 248 pcs total (2 villas)<br>
+      <span style="color:#e0e0e0; font-weight:600;">Socket Rp165K · USB+C Rp570K · Data Rp225K</span><br>
+      <span style="color:#e0e0e0; font-weight:600;">1-way Rp167K · 2-way Rp264K</span><br>
+      <span style="color:#e0e0e0; font-weight:600;">TV Rp194K · Dimmer Rp360K · Bell Rp183K</span><br>
+    </div>
+    <div style="margin-top:10px; font-size:20px; color:#c9a96e; font-weight:700;">Rp 26.5M <span style="font-size:12px; color:#888;">/villa</span></div>
+    <div style="font-size:14px; color:#f5f0e8; font-weight:600;">Rp 53M total (2 villas) · ~$3,300</div>
+  </div>
+  <div style="flex:1; min-width:280px; background:#1a1a1a; border:1px solid #64b5f6; border-radius:10px; padding:16px;">
+    <div style="font-size:13px; color:#64b5f6; font-weight:700; margin-bottom:8px;">OPTION B — TITANIUM V11 SILVER</div>
+    <div style="font-size:11px; color:#aaa; line-height:1.6;">
+      Modern flat design · Brushed silver · Full catalog<br>
+      124 pcs/villa · 248 pcs total (2 villas)<br>
+      <span style="color:#e0e0e0; font-weight:600;">Socket Rp123K · USB+C Rp525K · Data Rp178K</span><br>
+      <span style="color:#e0e0e0; font-weight:600;">1-way Rp109K · 2-way Rp121K</span><br>
+      <span style="color:#e0e0e0; font-weight:600;">TV Rp144K · Dimmer Rp335K · Bell Rp192K</span><br>
+    </div>
+    <div style="margin-top:10px; font-size:20px; color:#64b5f6; font-weight:700;">Rp 18.9M <span style="font-size:12px; color:#888;">/villa</span></div>
+    <div style="font-size:14px; color:#f5f0e8; font-weight:600;">Rp 37.8M total (2 villas) · ~$2,350</div>
+  </div>
+  <div style="width:100%; text-align:center; padding:8px; font-size:12px; color:#888;">
+    Savings with V11 Silver: <span style="color:#69f0ae; font-weight:600;">Rp 15.2M (~$950)</span> for 2 villas · 20A sockets ordered separately
+  </div>
+</div>
+
+<div class="table-wrap"><table>
+<tr><th>Item</th><th>Floor</th><th>Qty</th><th>Specs</th><th>Brand / SKU</th><th class="price">Est. Price (IDR)</th><th>Supplier</th><th>Status</th></tr>
+
+<tr data-floor="B"><td>Power Socket</td><td><span class="floor-tag floor-B">B</span></td><td>5</td><td>Standard</td><td>NERO I910UU-GR</td><td class="price">825,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="B"><td>Data Socket</td><td><span class="floor-tag floor-B">B</span></td><td>1</td><td>CAT6</td><td>NERO I9PCA-GR</td><td class="price">225,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="B"><td>Spot Lights</td><td><span class="floor-tag floor-B">B</span></td><td>12</td><td>Recessed downlight</td><td>TBD</td><td class="price price-est">3,600,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="B"><td>Wall Light</td><td><span class="floor-tag floor-B">B</span></td><td>8</td><td>Cinema sconces</td><td>TBD</td><td class="price price-est">4,000,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="B"><td>Hidden LED Light</td><td><span class="floor-tag floor-B">B</span></td><td>31.5 lm</td><td>LED strip cove</td><td>TBD</td><td class="price price-est">1,575,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="B"><td>1 Way Switch</td><td><span class="floor-tag floor-B">B</span></td><td>7</td><td>Gang TBD</td><td>NERO I91611D-GR</td><td class="price">1,169,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+
+<tr data-floor="GF"><td>Power Socket</td><td><span class="floor-tag floor-GF">GF</span></td><td>8</td><td>Standard</td><td>NERO I910UU-GR</td><td class="price">1,320,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="GF"><td>High Power Socket</td><td><span class="floor-tag floor-GF">GF</span></td><td>7</td><td>Kitchen appliances + AC</td><td>NERO I910UU-GR (20A)</td><td class="price">1,155,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="GF"><td>Data Socket</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>CAT6</td><td>NERO I9PCA-GR</td><td class="price">225,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="GF"><td>Spot Lights</td><td><span class="floor-tag floor-GF">GF</span></td><td>20</td><td>Recessed downlight</td><td>TBD</td><td class="price price-est">6,000,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Magnetic Light Rails</td><td><span class="floor-tag floor-GF">GF</span></td><td>17 lm</td><td>Track system</td><td>TBD</td><td class="price price-est">8,500,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Magnetic Light Fixtures</td><td><span class="floor-tag floor-GF">GF</span></td><td>14</td><td>For magnetic rail</td><td>TBD</td><td class="price price-est">4,200,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Hidden LED Light</td><td><span class="floor-tag floor-GF">GF</span></td><td>30 lm</td><td>LED strip cove</td><td>TBD</td><td class="price price-est">1,500,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Chandelier 01</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>Glass bubble design</td><td>TBD — Designer</td><td class="price price-est">5,000,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Chandelier 02</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>Crystal drops</td><td>TBD — Designer</td><td class="price price-est">5,000,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Pendant</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>Tube pendant cluster</td><td>TBD — Designer</td><td class="price price-est">3,000,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Stretch Light</td><td><span class="floor-tag floor-GF">GF</span></td><td>0.6 sqm</td><td>Translucent ceiling panel</td><td>TBD</td><td class="price price-est">1,500,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>1 Way Switch</td><td><span class="floor-tag floor-GF">GF</span></td><td>9</td><td>Gang TBD</td><td>NERO I91611D-GR</td><td class="price">1,503,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="GF"><td>2 Way Switch</td><td><span class="floor-tag floor-GF">GF</span></td><td>8</td><td>Gang TBD</td><td>NERO I91612D-GR</td><td class="price">1,528,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+
+<tr data-floor="1F"><td>Power Socket</td><td><span class="floor-tag floor-1F">1F</span></td><td>18</td><td>Incl. 4× USB+C at nightstands</td><td>NERO I910UU + I916VGAC</td><td class="price">5,590,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="1F"><td>High Power Socket</td><td><span class="floor-tag floor-1F">1F</span></td><td>2</td><td>AC units</td><td>NERO I910UU-GR</td><td class="price">330,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="1F"><td>Data Socket</td><td><span class="floor-tag floor-1F">1F</span></td><td>2</td><td>CAT6</td><td>NERO I9PCA-GR</td><td class="price">450,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="1F"><td>Spot Lights</td><td><span class="floor-tag floor-1F">1F</span></td><td>14</td><td>Recessed downlight</td><td>TBD</td><td class="price price-est">4,200,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Magnetic Light Rails</td><td><span class="floor-tag floor-1F">1F</span></td><td>14 lm</td><td>Track system</td><td>TBD</td><td class="price price-est">7,000,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Magnetic Light Fixtures</td><td><span class="floor-tag floor-1F">1F</span></td><td>8</td><td>For magnetic rail</td><td>TBD</td><td class="price price-est">2,400,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Hidden LED Light</td><td><span class="floor-tag floor-1F">1F</span></td><td>30.5 lm</td><td>LED strip cove</td><td>TBD</td><td class="price price-est">1,525,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Profile Light</td><td><span class="floor-tag floor-1F">1F</span></td><td>6 lm</td><td>Aluminum profile LED</td><td>TBD</td><td class="price price-est">900,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>1 Way Switch</td><td><span class="floor-tag floor-1F">1F</span></td><td>12</td><td>Gang TBD</td><td>NERO I91611D-GR</td><td class="price">2,004,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="1F"><td>2 Way Switch</td><td><span class="floor-tag floor-1F">1F</span></td><td>8</td><td>Gang TBD</td><td>NERO I91612D-GR</td><td class="price">1,528,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+
+<tr data-floor="2F"><td>Power Socket</td><td><span class="floor-tag floor-2F">2F</span></td><td>13</td><td>Incl. 2× USB+C at nightstands</td><td>NERO I910UU + I916VGAC</td><td class="price">2,955,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="2F"><td>High Power Socket</td><td><span class="floor-tag floor-2F">2F</span></td><td>1</td><td>AC</td><td>NERO I910UU-GR</td><td class="price">165,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="2F"><td>Data Socket</td><td><span class="floor-tag floor-2F">2F</span></td><td>1</td><td>CAT6</td><td>NERO I9PCA-GR</td><td class="price">225,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="2F"><td>Spot Lights</td><td><span class="floor-tag floor-2F">2F</span></td><td>14</td><td>Recessed downlight</td><td>TBD</td><td class="price price-est">4,200,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Magnetic Light Rails</td><td><span class="floor-tag floor-2F">2F</span></td><td>13 lm</td><td>Track system</td><td>TBD</td><td class="price price-est">6,500,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Magnetic Light Fixtures</td><td><span class="floor-tag floor-2F">2F</span></td><td>8</td><td>For magnetic rail</td><td>TBD</td><td class="price price-est">2,400,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Hidden LED Light</td><td><span class="floor-tag floor-2F">2F</span></td><td>21 lm</td><td>LED strip cove</td><td>TBD</td><td class="price price-est">1,050,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>1 Way Switch</td><td><span class="floor-tag floor-2F">2F</span></td><td>8</td><td>Gang TBD</td><td>NERO I91611D-GR</td><td class="price">1,336,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="2F"><td>2 Way Switch</td><td><span class="floor-tag floor-2F">2F</span></td><td>4</td><td>Gang TBD</td><td>NERO I91612D-GR</td><td class="price">764,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+
+<tr data-floor="R"><td>Power Socket</td><td><span class="floor-tag floor-R">R</span></td><td>4</td><td>⚠️ Need IP44 cover (salt air)</td><td>NERO I910UU-GR + WP cover</td><td class="price">860,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="R"><td>Spot Lights</td><td><span class="floor-tag floor-R">R</span></td><td>12</td><td>Outdoor rated</td><td>TBD — IP65</td><td class="price price-est">4,800,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="R"><td>1 Way Switch</td><td><span class="floor-tag floor-R">R</span></td><td>1</td><td></td><td>NERO I91611D-GR</td><td class="price">167,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+
+<tr data-floor="B"><td>TV Outlet</td><td><span class="floor-tag floor-B">B</span></td><td>1</td><td>Cinema</td><td>NERO I9TV-GR / V11TV-S</td><td class="price">194,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="GF"><td>TV Outlet</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>Living room</td><td>NERO I9TV-GR / V11TV-S</td><td class="price">194,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="1F"><td>TV Outlet</td><td><span class="floor-tag floor-1F">1F</span></td><td>2</td><td>Bedrooms</td><td>NERO I9TV-GR / V11TV-S</td><td class="price">388,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="2F"><td>TV Outlet</td><td><span class="floor-tag floor-2F">2F</span></td><td>1</td><td>Master bedroom</td><td>NERO I9TV-GR / V11TV-S</td><td class="price">194,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="GF"><td>Dimmer</td><td><span class="floor-tag floor-GF">GF</span></td><td>2</td><td>Living + dining</td><td>NERO I9L63-GR / V11L63-S</td><td class="price">720,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="1F"><td>Dimmer</td><td><span class="floor-tag floor-1F">1F</span></td><td>1</td><td>Bedroom</td><td>NERO I9L63-GR / V11L63-S</td><td class="price">360,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="2F"><td>Dimmer</td><td><span class="floor-tag floor-2F">2F</span></td><td>1</td><td>Master bedroom</td><td>NERO I9L63-GR / V11L63-S</td><td class="price">360,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="GF"><td>Door Bell</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>Entrance</td><td>NERO I91013-GR / V111013-S</td><td class="price">183,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+<tr data-floor="R"><td>Cover Outdoor IP44</td><td><span class="floor-tag floor-R">R</span></td><td>4</td><td>Waterproof cover for roof sockets</td><td>NERO A6FSH Transparent</td><td class="price">180,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/nero-electric" target="_blank">NERO Tokopedia</a></td><td><span class="status status-pending">Pending</span></td></tr>
+</table></div>
+</div>
+
+<!-- ========== 2. FLOOR FINISHES ========== -->
+<div class="category" data-cat="floors">
+<div class="category-header" onclick="toggleCat(this)">
+  <div><h2>🏗 Floor Finishes</h2><span class="cat-count">7 types · 325.5 sqm</span></div>
+  <div class="cat-total">IDR ~85M</div>
+</div>
+<div class="table-wrap"><table>
+<tr><th>Item</th><th>Floor</th><th>Area</th><th>Specs</th><th>Brand</th><th class="price">Est. Price (IDR)</th><th>Supplier</th><th>Status</th></tr>
+<tr data-floor="B"><td>Carpet Floor</td><td><span class="floor-tag floor-B">B</span></td><td>26.5 sqm</td><td>Carpet roll, grey</td><td>TBD</td><td class="price price-est">5,300,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Concrete Effect Tiles</td><td><span class="floor-tag floor-GF">GF</span></td><td>110 sqm</td><td>F01 — 60×120cm. ⚠️ Kitchen area may be stone not tile — confirm with architect</td><td>NIRO Granite Cementum</td><td class="price price-est">33,000,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/search?q=niro+granite+cementum" target="_blank">Search Tokopedia</a></td><td><span class="status status-tbd">TBD brand</span></td></tr>
+<tr data-floor="GF"><td>Wooden Stair Steps</td><td><span class="floor-tag floor-GF">GF</span></td><td>—</td><td>Night stand wooden stairs</td><td>Custom carpentry</td><td class="price price-est">8,000,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Wood Floor Tiles</td><td><span class="floor-tag floor-1F">1F</span></td><td>55 sqm</td><td>F01 — Wood-look porcelain</td><td>NIRO Granite / local</td><td class="price price-est">13,750,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/search?q=niro+granite+wood+tile" target="_blank">Search Tokopedia</a></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Ceramic Tiles (bathroom)</td><td><span class="floor-tag floor-1F">1F</span></td><td>13 sqm</td><td>F02 — Grey stone effect</td><td>NIRO Granite Marbre</td><td class="price price-est">3,900,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/search?q=niro+granite+marbre" target="_blank">Search Tokopedia</a></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Wood Floor Tiles</td><td><span class="floor-tag floor-2F">2F</span></td><td>45.5 sqm</td><td>F01 — Wood-look porcelain</td><td>NIRO Granite / local</td><td class="price price-est">11,375,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Ceramic Tiles (bathroom)</td><td><span class="floor-tag floor-2F">2F</span></td><td>8.5 sqm</td><td>F02 — Grey stone effect</td><td>NIRO Granite Marbre</td><td class="price price-est">2,550,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="R"><td>Wooden Deck</td><td><span class="floor-tag floor-R">R</span></td><td>35 sqm</td><td>Outdoor terrace</td><td>Bengkirai / Ulin local</td><td class="price price-est">17,500,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="R"><td>Pool Tiles</td><td><span class="floor-tag floor-R">R</span></td><td>32 sqm</td><td>Anti-slip pool tiles</td><td>TBD</td><td class="price price-est">9,600,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+</table></div>
+</div>
+
+<!-- ========== 3. WALL FINISHES ========== -->
+<div class="category" data-cat="walls">
+<div class="category-header" onclick="toggleCat(this)">
+  <div><h2>🧱 Wall Finishes</h2><span class="cat-count">10 types · ~460 sqm</span></div>
+  <div class="cat-total">IDR ~165M</div>
+</div>
+<div class="table-wrap"><table>
+<tr><th>Item</th><th>Floor</th><th>Area</th><th>Specs</th><th>Brand</th><th class="price">Est. Price (IDR)</th><th>Supplier</th><th>Status</th></tr>
+<tr data-floor="B"><td>Grey Stone Cladding (W01)</td><td><span class="floor-tag floor-B">B</span></td><td>69 sqm</td><td>Feature wall cinema</td><td>Palimanan / local stone</td><td class="price price-est">34,500,000</td><td><a class="supplier-link" href="#">Stone Bali</a></td><td><span class="status status-pending">RFQ sent</span></td></tr>
+<tr data-floor="GF"><td>Tempered Glass Partition</td><td><span class="floor-tag floor-GF">GF</span></td><td>21.5 sqm</td><td>10mm clear glass</td><td>Local glass</td><td class="price price-est">10,750,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Travertine Cladding (plant pots)</td><td><span class="floor-tag floor-GF">GF</span></td><td>3.7 sqm</td><td>Built-in planter box</td><td>Travertine natural</td><td class="price price-est">2,220,000</td><td><a class="supplier-link" href="#">Stone Bali</a></td><td><span class="status status-pending">RFQ sent</span></td></tr>
+<tr data-floor="GF"><td>Effect Paint</td><td><span class="floor-tag floor-GF">GF</span></td><td>84 sqm</td><td>Limewash / tadelakt look</td><td>Limewash local</td><td class="price price-est">12,600,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Stone Cladding (W01)</td><td><span class="floor-tag floor-GF">GF</span></td><td>6.5 sqm</td><td>Kitchen feature wall — Palimanan</td><td>Palimanan</td><td class="price price-est">3,900,000</td><td><a class="supplier-link" href="#">Stone Bali</a></td><td><span class="status status-pending">RFQ sent</span></td></tr>
+<tr data-floor="GF"><td>Wood Cladding</td><td><span class="floor-tag floor-GF">GF</span></td><td>8.25 sqm</td><td>Oak wood panels</td><td>Local carpentry</td><td class="price price-est">4,125,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Travertine Cladding (W04)</td><td><span class="floor-tag floor-GF">GF</span></td><td>4 sqm</td><td>Kitchen backsplash</td><td>Travertine honed</td><td class="price price-est">2,400,000</td><td><a class="supplier-link" href="#">Stone Bali</a></td><td><span class="status status-pending">RFQ sent</span></td></tr>
+<tr data-floor="GF"><td>Mirror Cladding</td><td><span class="floor-tag floor-GF">GF</span></td><td>~2 sqm</td><td>Decorative</td><td>Local glass</td><td class="price price-est">1,200,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Effect Paint</td><td><span class="floor-tag floor-1F">1F</span></td><td>140 sqm</td><td>Limewash / tadelakt</td><td>Limewash local</td><td class="price price-est">21,000,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Mirror Cladding</td><td><span class="floor-tag floor-1F">1F</span></td><td>~10 sqm</td><td>Full wall mirror bathrooms</td><td>Local glass</td><td class="price price-est">6,000,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Wooden Cladding</td><td><span class="floor-tag floor-1F">1F</span></td><td>1.5 sqm</td><td>Accent</td><td>Local</td><td class="price price-est">750,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Ceramic Tiles (walls)</td><td><span class="floor-tag floor-1F">1F</span></td><td>72.5 sqm</td><td>Bathroom walls</td><td>NIRO Granite</td><td class="price price-est">21,750,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/search?q=niro+granite" target="_blank">Search Tokopedia</a></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Stone Cladding (W01)</td><td><span class="floor-tag floor-2F">2F</span></td><td>15 sqm</td><td>Master bedroom feature wall — Palimanan</td><td>Palimanan custom slab</td><td class="price price-est">9,000,000</td><td><a class="supplier-link" href="#">Stone Bali</a></td><td><span class="status status-pending">RFQ sent</span></td></tr>
+<tr data-floor="2F"><td>Mirror Cladding</td><td><span class="floor-tag floor-2F">2F</span></td><td>8.5 sqm</td><td>Bathroom mirror wall</td><td>Local glass</td><td class="price price-est">5,100,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Wooden Cladding</td><td><span class="floor-tag floor-2F">2F</span></td><td>23 sqm</td><td>Feature panels</td><td>Local carpentry</td><td class="price price-est">11,500,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Emulsion Paint</td><td><span class="floor-tag floor-2F">2F</span></td><td>35.5 sqm</td><td>Standard wall paint</td><td>Dulux / Jotun</td><td class="price price-est">1,775,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="R"><td>Wood Cladding</td><td><span class="floor-tag floor-R">R</span></td><td>14 sqm</td><td>Outdoor rated</td><td>Bengkirai</td><td class="price price-est">7,000,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="R"><td>Emulsion Paint</td><td><span class="floor-tag floor-R">R</span></td><td>6 sqm</td><td>Exterior paint</td><td>Dulux Weathershield</td><td class="price price-est">600,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+</table></div>
+</div>
+
+<!-- ========== 4. CEILING FINISHES ========== -->
+<div class="category" data-cat="ceilings">
+<div class="category-header" onclick="toggleCat(this)">
+  <div><h2>✨ Ceiling Finishes</h2><span class="cat-count">5 types · ~362 sqm + 29 lm cove</span></div>
+  <div class="cat-total">IDR ~95M</div>
+</div>
+<div class="table-wrap"><table>
+<tr><th>Item</th><th>Floor</th><th>Area</th><th>Specs</th><th class="price">Est. Price (IDR)</th><th>Status</th></tr>
+<tr data-floor="B"><td>Gypsum Board Ceiling (C01)</td><td><span class="floor-tag floor-B">B</span></td><td>8.5 sqm</td><td>12mm gypsum + grey paint</td><td class="price price-est">1,275,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="B"><td>Star Light Fiber Ceiling (C02)</td><td><span class="floor-tag floor-B">B</span></td><td>18 sqm</td><td>Fiber optic on wood/alu subframe — cinema</td><td class="price price-est">18,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="B"><td>Ceiling Cove Light</td><td><span class="floor-tag floor-B">B</span></td><td>18.5 lm</td><td>LED cove perimeter</td><td class="price price-est">925,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Gypsum Board Ceiling (C01)</td><td><span class="floor-tag floor-GF">GF</span></td><td>110 sqm</td><td>12mm gypsum + white paint</td><td class="price price-est">16,500,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Wooden Ceiling Cladding (C02)</td><td><span class="floor-tag floor-GF">GF</span></td><td>44 sqm</td><td>Oak wood</td><td class="price price-est">22,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Ceiling Cove Light</td><td><span class="floor-tag floor-GF">GF</span></td><td>6.5 lm</td><td>LED cove</td><td class="price price-est">325,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Gypsum Board Ceiling (C01)</td><td><span class="floor-tag floor-1F">1F</span></td><td>66.5 sqm</td><td>12mm gypsum + white paint</td><td class="price price-est">9,975,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Wooden Ceiling Cladding (C02)</td><td><span class="floor-tag floor-1F">1F</span></td><td>13 sqm</td><td>Oak wood</td><td class="price price-est">6,500,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Gypsum Board Ceiling (C01)</td><td><span class="floor-tag floor-2F">2F</span></td><td>53.5 sqm</td><td>12mm gypsum + white paint</td><td class="price price-est">8,025,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Wooden Ceiling Cladding (C02)</td><td><span class="floor-tag floor-2F">2F</span></td><td>9.5 sqm</td><td>Oak wood</td><td class="price price-est">4,750,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Ceiling Cove Light</td><td><span class="floor-tag floor-2F">2F</span></td><td>4 lm</td><td>LED cove</td><td class="price price-est">200,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="R"><td>Shade Structure</td><td><span class="floor-tag floor-R">R</span></td><td>38 sqm</td><td>Steel frame + wooden cladding</td><td class="price price-est">19,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+</table></div>
+</div>
+
+<!-- ========== 5. DOORS ========== -->
+<div class="category" data-cat="doors">
+<div class="category-header" onclick="toggleCat(this)">
+  <div><h2>🚪 Doors</h2><span class="cat-count">7 types · 11 units</span></div>
+  <div class="cat-total">IDR ~55M</div>
+</div>
+<div class="table-wrap"><table>
+<tr><th>Item</th><th>Floor</th><th>Qty</th><th>Size</th><th>Specs</th><th class="price">Est. Price (IDR)</th><th>Status</th></tr>
+<tr data-floor="B"><td>Wooden Hinged Door</td><td><span class="floor-tag floor-B">B</span></td><td>1</td><td>900×2600</td><td>Black matte finish</td><td class="price price-est">5,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Entrance Door</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>1625×2800</td><td>Oak + glass & wood frame</td><td class="price price-est">12,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>W.C. Hidden Door</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>700×2800</td><td>Hidden, wall paint finish</td><td class="price price-est">4,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Wooden Hinged Door</td><td><span class="floor-tag floor-1F">1F</span></td><td>2</td><td>1000×2800</td><td>Bedroom doors</td><td class="price price-est">10,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Wooden Hinged Door</td><td><span class="floor-tag floor-1F">1F</span></td><td>2</td><td>800×2800</td><td>Bathroom doors</td><td class="price price-est">8,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Hidden Door</td><td><span class="floor-tag floor-2F">2F</span></td><td>1</td><td>1000×2800</td><td>Wall paint finish</td><td class="price price-est">5,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Hidden Door</td><td><span class="floor-tag floor-2F">2F</span></td><td>1</td><td>750×2800</td><td>Wall paint finish</td><td class="price price-est">4,500,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="R"><td>Aluminum Door</td><td><span class="floor-tag floor-R">R</span></td><td>2</td><td>L=1300</td><td>Outdoor rated</td><td class="price price-est">8,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+</table></div>
+</div>
+
+<!-- ========== 6. SANITARY ========== -->
+<div class="category" data-cat="sanitary">
+<div class="category-header" onclick="toggleCat(this)">
+  <div><h2>🚿 Sanitary Fixtures</h2><span class="cat-count">6 types · 12 units</span></div>
+  <div class="cat-total">IDR ~65M</div>
+</div>
+<div class="table-wrap"><table>
+<tr><th>Item</th><th>Floor</th><th>Qty</th><th>Specs</th><th>Brand</th><th class="price">Est. Price (IDR)</th><th>Supplier</th><th>Status</th></tr>
+<tr data-floor="GF"><td>Kitchen Sink</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>Stainless steel + mixer</td><td>Paloma Granitech</td><td class="price price-est">3,500,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/search?q=paloma+kitchen+sink" target="_blank">Search Paloma</a></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Concealed Toilet Seat</td><td><span class="floor-tag floor-1F">1F</span></td><td>2</td><td>Wall-hung</td><td>Paloma</td><td class="price price-est">10,000,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/search?q=paloma+concealed+toilet" target="_blank">Search Paloma</a></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Marble Wash Basin + Mixer</td><td><span class="floor-tag floor-1F">1F</span></td><td>2</td><td>Stand alone marble</td><td>Custom stone + Paloma mixer</td><td class="price price-est">12,000,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Concealed Shower Set</td><td><span class="floor-tag floor-1F">1F</span></td><td>2</td><td>Wall-mounted concealed</td><td>Paloma</td><td class="price price-est">6,000,000</td><td><a class="supplier-link" href="https://www.tokopedia.com/search?q=paloma+concealed+shower" target="_blank">Search Paloma</a></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Concealed Toilet Seat</td><td><span class="floor-tag floor-2F">2F</span></td><td>1</td><td>Wall-hung</td><td>Paloma</td><td class="price price-est">5,000,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Marble Wash Basin + Mixer</td><td><span class="floor-tag floor-2F">2F</span></td><td>2</td><td>Stand alone marble</td><td>Custom stone + Paloma</td><td class="price price-est">12,000,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Shower Set</td><td><span class="floor-tag floor-2F">2F</span></td><td>1</td><td>Exposed style</td><td>Paloma</td><td class="price price-est">2,500,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Bath Tub</td><td><span class="floor-tag floor-2F">2F</span></td><td>1</td><td>Marble freestanding</td><td>Custom marble</td><td class="price price-est">15,000,000</td><td></td><td><span class="status status-tbd">TBD</span></td></tr>
+</table></div>
+</div>
+
+<!-- ========== 7. FURNITURE ========== -->
+<div class="category" data-cat="furniture">
+<div class="category-header" onclick="toggleCat(this)">
+  <div><h2>🛋 Furniture</h2><span class="cat-count">25 types · 48 units</span></div>
+  <div class="cat-total">IDR ~350M</div>
+</div>
+<div class="table-wrap"><table>
+<tr><th>Item</th><th>Floor</th><th>Qty</th><th>Size</th><th>Specs</th><th class="price">Est. Price (IDR)</th><th>Status</th></tr>
+<tr data-floor="B"><td>Sofa (cinema)</td><td><span class="floor-tag floor-B">B</span></td><td>2</td><td>2900×900</td><td>Suede leather, grey</td><td class="price price-est">30,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="B"><td>Side Table</td><td><span class="floor-tag floor-B">B</span></td><td>2</td><td>R250, H600</td><td>Wood, black matte</td><td class="price price-est">3,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="B"><td>Hanging Shelf</td><td><span class="floor-tag floor-B">B</span></td><td>1</td><td>4750×350</td><td>Wood, light grey</td><td class="price price-est">3,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>L-Shaped Sofa</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>3600×2700</td><td>Upholstered fabric</td><td class="price price-est">25,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Coffee Table Twin Set</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>Organic</td><td>Marble + round black wood</td><td class="price price-est">8,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Built-in Travertine Shelf</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>4750×300</td><td>Travertine marble</td><td class="price price-est">6,000,000</td><td><span class="status status-pending">RFQ Stone Bali</span></td></tr>
+<tr data-floor="GF"><td>Bar Stools</td><td><span class="floor-tag floor-GF">GF</span></td><td>4</td><td>—</td><td>Kitchen bar</td><td class="price price-est">8,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Kitchen Bar Island</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>3250×900×900</td><td>Stone base + travertine top 3.5sqm</td><td class="price price-est">25,000,000</td><td><span class="status status-pending">RFQ Stone Bali</span></td></tr>
+<tr data-floor="GF"><td>Kitchen Cabinet</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>L=4835</td><td>Oak + travertine countertop 2.5sqm</td><td class="price price-est">30,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Dining Table</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>2400×1000</td><td>Wooden</td><td class="price price-est">10,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Dining Chairs</td><td><span class="floor-tag floor-GF">GF</span></td><td>8</td><td>—</td><td>Wood + beige fabric</td><td class="price price-est">16,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Built-in Sofa</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>—</td><td>Beige fabric</td><td class="price price-est">8,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Coffee Table</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>100×600</td><td>Mirror + stone</td><td class="price price-est">5,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>L-Shaped Sofa (lounge)</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>3550×1800</td><td>Beige fabric</td><td class="price price-est">18,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Side Table</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>R250, H600</td><td>Wood</td><td class="price price-est">1,500,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Bed</td><td><span class="floor-tag floor-1F">1F</span></td><td>2</td><td>1800×2000</td><td>Beige upholstery, wood base</td><td class="price price-est">20,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Hanging Nightstand</td><td><span class="floor-tag floor-1F">1F</span></td><td>4</td><td>400×500</td><td>Oak wood</td><td class="price price-est">6,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Cupboard</td><td><span class="floor-tag floor-1F">1F</span></td><td>2</td><td>3400×2800</td><td>Oak, sliding door, LED shelves</td><td class="price price-est">24,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Hanging Dresser</td><td><span class="floor-tag floor-1F">1F</span></td><td>2</td><td>1350×600</td><td>Oak wood, drawer</td><td class="price price-est">8,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Chair</td><td><span class="floor-tag floor-1F">1F</span></td><td>2</td><td>—</td><td>Wood + beige fabric</td><td class="price price-est">4,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Bed (master)</td><td><span class="floor-tag floor-2F">2F</span></td><td>1</td><td>1800×2000</td><td>Beige upholstery</td><td class="price price-est">12,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Armchair</td><td><span class="floor-tag floor-2F">2F</span></td><td>1</td><td>—</td><td>Beige fabric</td><td class="price price-est">5,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>L-Shaped Sofa</td><td><span class="floor-tag floor-2F">2F</span></td><td>1</td><td>2600×1600</td><td>Beige fabric</td><td class="price price-est">15,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Cupboard (master)</td><td><span class="floor-tag floor-2F">2F</span></td><td>1</td><td>3650×2800</td><td>Wood + sliding glass, LED</td><td class="price price-est">15,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Travertine Shelf</td><td><span class="floor-tag floor-2F">2F</span></td><td>1</td><td>2650×400</td><td>Travertine marble</td><td class="price price-est">4,000,000</td><td><span class="status status-pending">RFQ Stone Bali</span></td></tr>
+<tr data-floor="R"><td>Sofa</td><td><span class="floor-tag floor-R">R</span></td><td>1</td><td>2400×900</td><td>Beige fabric outdoor</td><td class="price price-est">8,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="R"><td>L-Shaped Built-in Sofa</td><td><span class="floor-tag floor-R">R</span></td><td>1</td><td>3025×2710</td><td>Built-in</td><td class="price price-est">10,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="R"><td>Coffee Tables</td><td><span class="floor-tag floor-R">R</span></td><td>2</td><td>R250 + R350</td><td>Wood</td><td class="price price-est">3,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+</table></div>
+</div>
+
+<!-- ========== 8. EQUIPMENT & ACCESSORIES ========== -->
+<div class="category" data-cat="equipment">
+<div class="category-header" onclick="toggleCat(this)">
+  <div><h2>🔧 Equipment & Accessories</h2><span class="cat-count">15 types</span></div>
+  <div class="cat-total">IDR ~120M</div>
+</div>
+<div class="table-wrap"><table>
+<tr><th>Item</th><th>Floor</th><th>Qty</th><th>Specs</th><th class="price">Est. Price (IDR)</th><th>Status</th></tr>
+<tr data-floor="B"><td>TV Screen</td><td><span class="floor-tag floor-B">B</span></td><td>1</td><td>Cinema projector/TV</td><td class="price price-est">8,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>TV Screen</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>Living room</td><td class="price price-est">6,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Refrigerator</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>Built-in</td><td class="price price-est">15,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Built-in Stove</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>900mm</td><td class="price price-est">12,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Ceiling Hood</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>Kitchen extract</td><td class="price price-est">8,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Built-in Microwave</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td></td><td class="price price-est">5,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Built-in Oven</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>900mm</td><td class="price price-est">10,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Tempered Glass Handrail</td><td><span class="floor-tag floor-GF">GF</span></td><td>8 panels</td><td>20mm clear, H=900mm</td><td class="price price-est">16,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="GF"><td>Carpet</td><td><span class="floor-tag floor-GF">GF</span></td><td>1</td><td>2400×3600mm</td><td class="price price-est">3,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>TV Screens</td><td><span class="floor-tag floor-1F">1F</span></td><td>2</td><td>Bedrooms</td><td class="price price-est">8,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Clear Mirrors</td><td><span class="floor-tag floor-1F">1F</span></td><td>2</td><td>1550×725mm framed</td><td class="price price-est">3,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="1F"><td>Niche Marble Shelves</td><td><span class="floor-tag floor-1F">1F</span></td><td>10</td><td>200×200mm</td><td class="price price-est">5,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Steel Partition</td><td><span class="floor-tag floor-2F">2F</span></td><td>1</td><td>1900×3000mm black steel</td><td class="price price-est">5,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Carpets</td><td><span class="floor-tag floor-2F">2F</span></td><td>2</td><td>2100×2600mm</td><td class="price price-est">4,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="2F"><td>Niche Marble Shelves</td><td><span class="floor-tag floor-2F">2F</span></td><td>3</td><td>200×300mm</td><td class="price price-est">1,500,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="R"><td>Wood Logs (decorative)</td><td><span class="floor-tag floor-R">R</span></td><td>20</td><td>50×200mm, H=3m</td><td class="price price-est">4,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="R"><td>Steel Handrail</td><td><span class="floor-tag floor-R">R</span></td><td>10 lm</td><td>H=900mm</td><td class="price price-est">5,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="R"><td>Glass Handrail (pool)</td><td><span class="floor-tag floor-R">R</span></td><td>5.5 lm</td><td>Double tempered</td><td class="price price-est">5,500,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+<tr data-floor="R"><td>Glass Handrail (terrace)</td><td><span class="floor-tag floor-R">R</span></td><td>4 lm</td><td>Double tempered</td><td class="price price-est">4,000,000</td><td><span class="status status-tbd">TBD</span></td></tr>
+</table></div>
+
+<!-- Roof Renders -->
+<div style="background:#141414;border:1px solid #2a2a2a;border-top:none;padding:16px;">
+  <div style="font-size:12px;color:#666;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">
+    <span class="lang-en">Roof Terrace — Design Renders</span>
+    <span class="lang-ru" style="display:none">Крыша / Терраса — Рендеры дизайна</span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+    <img src="render_roof_1.jpg" style="width:100%;border-radius:8px;border:1px solid #2a2a2a;cursor:pointer;" onclick="this.style.position=this.style.position==='fixed'?'':'fixed';this.style.top='5%';this.style.left='5%';this.style.width=this.style.width==='90%'?'100%':'90%';this.style.height='auto';this.style.zIndex=this.style.zIndex==='9999'?'':'9999';this.style.borderRadius='12px';" alt="Roof pool + lounge">
+    <img src="render_roof_2.jpg" style="width:100%;border-radius:8px;border:1px solid #2a2a2a;cursor:pointer;" onclick="this.style.position=this.style.position==='fixed'?'':'fixed';this.style.top='5%';this.style.left='5%';this.style.width=this.style.width==='90%'?'100%':'90%';this.style.height='auto';this.style.zIndex=this.style.zIndex==='9999'?'':'9999';this.style.borderRadius='12px';" alt="Roof aerial view">
+    <img src="render_roof_3.jpg" style="width:100%;border-radius:8px;border:1px solid #2a2a2a;cursor:pointer;" onclick="this.style.position=this.style.position==='fixed'?'':'fixed';this.style.top='5%';this.style.left='5%';this.style.width=this.style.width==='90%'?'100%':'90%';this.style.height='auto';this.style.zIndex=this.style.zIndex==='9999'?'':'9999';this.style.borderRadius='12px';" alt="Roof close-up lounge">
+  </div>
+  <div style="margin-top:10px;padding:10px 14px;background:#1a1a0a;border-left:3px solid #c9a96e;border-radius:0 6px 6px 0;font-size:12px;color:#888;">
+    <span class="lang-en"><strong style="color:#c9a96e;">Missing from BOQ:</strong> Fire pit table (~5M), Sunbed loungers ×2 (~8M), Outdoor cushion set (~3M), Wall lights on columns ×4 (~2M) — <strong>+18M IDR</strong></span>
+    <span class="lang-ru" style="display:none"><strong style="color:#c9a96e;">Нет в BOQ:</strong> Огненный стол (~5M), Шезлонги ×2 (~8M), Подушки (~3M), Настенные светильники на колоннах ×4 (~2M) — <strong>+18M IDR</strong></span>
+  </div>
+</div>
+</div>
+
+<!-- ========== STONE BALI ========== -->
+<div class="category" data-cat="stone">
+<div class="category-header" onclick="toggleCat(this)">
+  <div><h2>🪨 Natural Stone (Stone Bali RFQ)</h2><span class="cat-count">8 items · RFQ sent 21 March 2026</span></div>
+  <div class="cat-total">IDR ~TBD (awaiting quote)</div>
+</div>
+<div class="table-wrap"><table>
+<tr><th>Item</th><th>Floor</th><th>Area</th><th>Material</th><th>Notes</th><th>Status</th></tr>
+<tr data-floor="GF"><td>Backsplash Kitchen (W04)</td><td><span class="floor-tag floor-GF">GF</span></td><td>4 m²</td><td>Travertine honed</td><td>Behind stove</td><td><span class="status status-pending">RFQ sent</span></td></tr>
+<tr data-floor="1F"><td>Bathroom Wall (W04)</td><td><span class="floor-tag floor-1F">1F</span></td><td>4 m²</td><td>Travertine honed</td><td>Accent wall</td><td><span class="status status-pending">RFQ sent</span></td></tr>
+<tr data-floor="2F"><td>Feature Wall Master (W01)</td><td><span class="floor-tag floor-2F">2F</span></td><td>15 m²</td><td>Palimanan custom slab</td><td>Behind bed</td><td><span class="status status-pending">RFQ sent</span></td></tr>
+<tr data-floor="GF"><td>Feature Wall Kitchen (W01)</td><td><span class="floor-tag floor-GF">GF</span></td><td>6.5 m²</td><td>Palimanan</td><td>Accent wall</td><td><span class="status status-pending">RFQ sent</span></td></tr>
+<tr data-floor="GF"><td>Travertine Shelf</td><td><span class="floor-tag floor-GF">GF</span></td><td>~2 m²</td><td>Travertine</td><td>Built-in living room</td><td><span class="status status-pending">RFQ sent</span></td></tr>
+<tr data-floor="GF"><td>Built-in Plant Pot</td><td><span class="floor-tag floor-GF">GF</span></td><td>3.7 m²</td><td>Travertine</td><td>Planter box</td><td><span class="status status-pending">RFQ sent</span></td></tr>
+<tr data-floor="GF"><td>Kitchen Island Slab</td><td><span class="floor-tag floor-GF">GF</span></td><td>1 unit</td><td>Palimanan</td><td>Custom countertop</td><td><span class="status status-pending">RFQ sent</span></td></tr>
+<tr data-floor="GF"><td>Pool Edge Coping</td><td><span class="floor-tag floor-GF">GF</span></td><td>51 m'</td><td>Palimanan 3cm</td><td>Bullnose, anti-slip</td><td><span class="status status-pending">RFQ sent</span></td></tr>
+</table></div>
+</div>
+
+<!-- ========== SUPPLIER COMM TAB ========== -->
+<div class="category" data-cat="suppliers" id="supplierSection">
+<div class="category-header" onclick="toggleCat(this)">
+  <div><h2><span class="lang-en">💬 Supplier Communications</span><span class="lang-ru" style="display:none">💬 Переписка с поставщиками</span></h2><span class="cat-count"><span class="lang-en">Message log + templates</span><span class="lang-ru" style="display:none">Лог сообщений + шаблоны</span></span></div>
+  <div class="cat-total"></div>
+</div>
+
+<div class="supplier-panel" style="background:#141414;border:1px solid #2a2a2a;border-top:none;padding:20px;">
+
+<!-- Supplier buttons -->
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+  <button class="supplier-btn active" onclick="selectSupplier('nero', this)">NERO Electric</button>
+  <button class="supplier-btn" onclick="selectSupplier('stone_bali', this)">Stone Bali</button>
+  <button class="supplier-btn" onclick="selectSupplier('paloma', this)">Paloma Sanitary</button>
+  <button class="supplier-btn" onclick="selectSupplier('niro_granite', this)">NIRO Granite</button>
+  <button class="supplier-btn" onclick="selectSupplier('carpenter', this)">Carpenter / Tukang</button>
+  <button class="supplier-btn" onclick="selectSupplier('glass', this)">Glass / Kaca</button>
+  <button class="supplier-btn" onclick="selectSupplier('ac', this)">AC / HVAC</button>
+  <button class="supplier-btn" onclick="selectSupplier('custom', this)" title="Add new">+ New</button>
+</div>
+
+<!-- Supplier info bar -->
+<div id="supplierInfo" style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:12px 16px;margin-bottom:12px;font-size:13px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <strong id="supplierName" style="color:#c9a96e;">NERO Electric</strong>
+      <span id="supplierLink" style="margin-left:12px;"></span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="template-btn" onclick="insertTemplate('greeting')">🇮🇩 Salam</button>
+      <button class="template-btn" onclick="insertTemplate('price_ask')">💰 Tanya Harga</button>
+      <button class="template-btn" onclick="insertTemplate('followup')">📞 Follow-up</button>
+      <button class="template-btn" onclick="insertTemplate('order')">📦 Order</button>
+      <button class="template-btn" onclick="insertTemplate('nego')">🤝 Nego</button>
+    </div>
+  </div>
+</div>
+
+<!-- Message log -->
+<div id="messageLog" style="background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:16px;height:300px;overflow-y:auto;margin-bottom:12px;font-size:13px;line-height:1.6;">
+  <div style="color:#555;text-align:center;padding:40px 0;"><span class="lang-en">No messages yet. Start a conversation below.</span><span class="lang-ru" style="display:none">Сообщений пока нет. Начните переписку ниже.</span></div>
+</div>
+
+<!-- Compose area -->
+<div style="display:flex;gap:8px;">
+  <div style="flex:1;position:relative;">
+    <textarea id="msgInput" rows="3" style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px 14px;color:#e0e0e0;font-size:13px;resize:vertical;font-family:inherit;" placeholder="Tulis pesan / Write message..."></textarea>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:6px;">
+    <button class="send-btn" onclick="sendMessage('out')" title="Save as sent">📤 <span class="lang-en">Sent</span><span class="lang-ru" style="display:none">Отпр.</span></button>
+    <button class="send-btn" onclick="sendMessage('in')" title="Save supplier reply" style="background:#1b3a2d;">📥 <span class="lang-en">Reply</span><span class="lang-ru" style="display:none">Ответ</span></button>
+    <button class="send-btn" onclick="copyMsg()" title="Copy to clipboard" style="background:#2d1b4e;">📋 Copy</button>
+  </div>
+</div>
+
+<!-- Notes for supplier -->
+<div style="margin-top:12px;display:flex;gap:8px;">
+  <input type="text" id="supplierNotes" style="flex:1;background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px 14px;color:#e0e0e0;font-size:12px;" placeholder="Notes: contact person, WA number, terms...">
+  <button class="template-btn" onclick="saveSupplierNote()">💾 Save</button>
+</div>
+
+</div>
+</div>
+
+<style>
+.supplier-btn { background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:8px 14px; color:#aaa; cursor:pointer; font-size:12px; transition:all 0.2s; }
+.supplier-btn:hover, .supplier-btn.active { background:#c9a96e; color:#000; border-color:#c9a96e; font-weight:600; }
+.template-btn { background:#222; border:1px solid #333; border-radius:6px; padding:4px 10px; color:#aaa; cursor:pointer; font-size:11px; transition:all 0.2s; }
+.template-btn:hover { background:#333; color:#e0e0e0; }
+.send-btn { background:#1b2d3a; border:1px solid #333; border-radius:8px; padding:8px 12px; color:#e0e0e0; cursor:pointer; font-size:12px; min-width:70px; transition:all 0.2s; }
+.send-btn:hover { border-color:#c9a96e; }
+.msg-out { background:#1b2d3a; border-radius:8px; padding:8px 12px; margin-bottom:8px; border-left:3px solid #64b5f6; }
+.msg-in { background:#1b3a2d; border-radius:8px; padding:8px 12px; margin-bottom:8px; border-left:3px solid #69f0ae; }
+.msg-time { font-size:10px; color:#555; margin-top:4px; }
+.msg-label { font-size:10px; font-weight:600; margin-bottom:4px; }
+</style>
+
+<script>
+const supplierData = {
+  nero: { name:'NERO Electric', link:'<a class="supplier-link" href="https://www.tokopedia.com/neroelectric" target="_blank">Tokopedia Store</a>', items:'Sockets, Switches, Data outlets — PRECIOSA I9 Grey' },
+  stone_bali: { name:'Stone Bali', link:'<a class="supplier-link" href="#">WhatsApp / Direct</a>', items:'Travertine, Palimanan, Pool coping, Kitchen island' },
+  paloma: { name:'Paloma Sanitary', link:'<a class="supplier-link" href="https://www.tokopedia.com/search?q=paloma+sanitary" target="_blank">Tokopedia Search</a>', items:'Toilets, Showers, Basins, Kitchen sink' },
+  niro_granite: { name:'NIRO Granite', link:'<a class="supplier-link" href="https://www.tokopedia.com/search?q=niro+granite" target="_blank">Tokopedia Search</a>', items:'Concrete effect tiles, Wood tiles, Ceramic tiles' },
+  carpenter: { name:'Carpenter / Tukang Kayu', link:'', items:'Doors, Cupboards, Shelves, Wooden cladding, Deck' },
+  glass: { name:'Glass Supplier / Kaca', link:'', items:'Handrails, Partitions, Mirrors' },
+  ac: { name:'AC / HVAC', link:'', items:'~12 indoor units across all floors' },
+  custom: { name:'New Supplier', link:'', items:'' }
+};
+
+let currentSupplier = 'nero';
+
+function selectSupplier(id, btn) {
+  currentSupplier = id;
+  document.querySelectorAll('.supplier-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const s = supplierData[id];
+  document.getElementById('supplierName').textContent = s.name;
+  document.getElementById('supplierLink').innerHTML = s.link;
+  loadMessages();
+  const savedNote = localStorage.getItem('cp_note_' + id) || '';
+  document.getElementById('supplierNotes').value = savedNote;
+}
+
+function loadMessages() {
+  const log = document.getElementById('messageLog');
+  const msgs = JSON.parse(localStorage.getItem('cp_msgs_' + currentSupplier) || '[]');
+  if (msgs.length === 0) {
+    log.innerHTML = '<div style="color:#555;text-align:center;padding:40px 0;">No messages yet.</div>';
+    return;
+  }
+  log.innerHTML = msgs.map(m => {
+    const cls = m.dir === 'out' ? 'msg-out' : 'msg-in';
+    const label = m.dir === 'out' ? '📤 You → ' + supplierData[currentSupplier].name : '📥 ' + supplierData[currentSupplier].name + ' → You';
+    return '<div class="'+cls+'"><div class="msg-label" style="color:'+(m.dir==='out'?'#64b5f6':'#69f0ae')+'">'+label+'</div><div style="white-space:pre-wrap;">'+escHtml(m.text)+'</div><div class="msg-time">'+m.time+' <span style="cursor:pointer;color:#666;" onclick="deleteMsg(\''+m.id+'\')">[x]</span></div></div>';
+  }).join('');
+  log.scrollTop = log.scrollHeight;
+}
+
+function sendMessage(dir) {
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const msgs = JSON.parse(localStorage.getItem('cp_msgs_' + currentSupplier) || '[]');
+  msgs.push({ id: Date.now().toString(), dir, text, time: new Date().toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) });
+  localStorage.setItem('cp_msgs_' + currentSupplier, JSON.stringify(msgs));
+  input.value = '';
+  loadMessages();
+}
+
+function deleteMsg(id) {
+  let msgs = JSON.parse(localStorage.getItem('cp_msgs_' + currentSupplier) || '[]');
+  msgs = msgs.filter(m => m.id !== id);
+  localStorage.setItem('cp_msgs_' + currentSupplier, JSON.stringify(msgs));
+  loadMessages();
+}
+
+function copyMsg() {
+  const input = document.getElementById('msgInput');
+  navigator.clipboard.writeText(input.value).then(() => {
+    input.style.borderColor = '#69f0ae';
+    setTimeout(() => input.style.borderColor = '#333', 1000);
+  });
+}
+
+function saveSupplierNote() {
+  const note = document.getElementById('supplierNotes').value;
+  localStorage.setItem('cp_note_' + currentSupplier, note);
+  const el = document.getElementById('supplierNotes');
+  el.style.borderColor = '#69f0ae';
+  setTimeout(() => el.style.borderColor = '#333', 1000);
+}
+
+function insertTemplate(type) {
+  const name = supplierData[currentSupplier].name;
+  const templates = {
+    greeting: 'Selamat siang,\n\nPerkenalkan, saya dari proyek Villa Casa Palmera di Seseh, Bali.\nKami sedang mencari material finishing untuk villa kami dan tertarik dengan produk dari ' + name + '.\n\nApakah bisa kami minta informasi lebih lanjut?\n\nTerima kasih.',
+    price_ask: 'Selamat siang,\n\nKami ingin menanyakan harga untuk item berikut:\n\n1. [ITEM] — jumlah: [QTY]\n2. [ITEM] — jumlah: [QTY]\n\nMohon info:\n- Harga per unit/m2\n- Stok tersedia\n- Waktu pengiriman ke Seseh, Bali\n- Apakah ada diskon untuk jumlah besar?\n\nTerima kasih.',
+    followup: 'Selamat siang,\n\nMohon maaf mengganggu — saya ingin follow up mengenai penawaran harga yang sudah kami kirimkan sebelumnya untuk proyek Villa Casa Palmera.\n\nApakah sudah ada update?\n\nTerima kasih banyak.',
+    order: 'Selamat siang,\n\nKami ingin melanjutkan dengan pemesanan:\n\n[DETAIL ORDER]\n\nMohon info:\n- Total harga\n- Cara pembayaran (DP / full)\n- Estimasi pengiriman ke: Jln Munduk Belan, Cemagi-Seseh, Bali\n\nTerima kasih.',
+    nego: 'Selamat siang,\n\nTerima kasih atas penawaran harganya.\n\nKami sangat tertarik, namun budget kami agak terbatas untuk proyek ini. Apakah ada kemungkinan untuk mendapatkan harga yang lebih baik?\n\nKami juga berencana untuk memesan lagi untuk proyek villa ke-2 dengan desain yang sama, jadi ini bisa menjadi kerja sama jangka panjang.\n\nMohon pertimbangannya.\nTerima kasih.'
+  };
+  document.getElementById('msgInput').value = templates[type] || '';
+}
+
+function escHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+// Init
+loadMessages();
+</script>
+
+<div class="notes">
+  <strong>⚠️ Open Questions for Architect:</strong><br>
+  1. Kitchen floor (GF): Is it Concrete Effect Tiles or natural stone? Affects 110 sqm calculation.<br>
+  2. Switch Schedule: Need room-by-room gang configuration before ordering NERO switches.<br>
+  3. NIRO Granite: Confirm series/SKU for F01 and F02 tiles.<br>
+  4. Roof sockets: IP44 weatherproof covers needed for Seseh salt air.<br>
+  5. Bathroom shaver sockets: Not in BOQ — needed?<br>
+  6. AC units: Exact model/capacity per room TBD with MEP consultant.
+</div>
+
+</div>
+
+<div class="footer">
+  <span class="lang-en">Casa Palmera — Villa Finishing Dashboard &nbsp;|&nbsp; Auto-generated 25 March 2026 &nbsp;|&nbsp; Prices are estimates for Bali market</span><span class="lang-ru" style="display:none">Casa Palmera — Дашборд отделки виллы &nbsp;|&nbsp; Создано 25 марта 2026 &nbsp;|&nbsp; Цены — оценка для рынка Бали</span>
+</div>
+
+<script>
+let activeFloor = 'all';
+let currentLang = 'en';
+
+function filterTable() {
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  document.querySelectorAll('table tr').forEach(tr => {
+    if (tr.querySelector('th')) return;
+    const text = tr.textContent.toLowerCase();
+    const floorMatch = activeFloor === 'all' || (tr.dataset.floor && tr.dataset.floor === activeFloor);
+    const searchMatch = !q || text.includes(q);
+    tr.style.display = (floorMatch && searchMatch) ? '' : 'none';
+  });
+}
+
+function filterFloor(floor, btn) {
+  activeFloor = floor;
+  document.querySelectorAll('.floor-filter').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterTable();
+}
+
+function toggleCat(header) {
+  const table = header.nextElementSibling;
+  if (table && table.tagName === 'TABLE') {
+    table.style.display = table.style.display === 'none' ? '' : 'none';
+  }
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-en').forEach(el => el.style.display = lang === 'en' ? '' : 'none');
+  document.querySelectorAll('.lang-ru').forEach(el => el.style.display = lang === 'ru' ? '' : 'none');
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-ru').classList.toggle('active', lang === 'ru');
+}
+</script>
+
+</body>
+</html>
